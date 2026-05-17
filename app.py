@@ -19,6 +19,37 @@ hide_streamlit_style = """
     [data-testid="stToolbar"] {display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
     [data-testid="stStatusWidget"] {display: none !important;}
+
+    /* ==== body 级弹窗/浮层 强制暗底（Streamlit 渲染在 body 末端的 portal） ==== */
+    body > div:last-child,
+    body > div[data-baseweb],
+    [data-baseweb="popover"], [data-baseweb="popover"] *,
+    [data-baseweb="menu"], [data-baseweb="menu"] *,
+    [data-baseweb="tooltip"], [data-baseweb="tooltip"] *,
+    ul[role="listbox"], ul[role="listbox"] li, ul[role="listbox"] div, ul[role="listbox"] span,
+    ul[data-baseweb="menu"], ul[data-baseweb="menu"] li, ul[data-baseweb="menu"] div,
+    div[role="listbox"], div[role="listbox"] div, div[role="listbox"] span,
+    div[data-baseweb], div[data-baseweb] > div,
+    [role="option"], [role="option"] span, [role="option"] div {
+        background-color: #14141f !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(255,255,255,0.10) !important;
+    }
+    [role="option"]:hover, [role="option"][aria-selected="true"],
+    ul[role="listbox"] li:hover {
+        background-color: rgba(167,139,250,0.15) !important;
+    }
+    /* multiselect 已选标签 */
+    [data-baseweb="tag"], span[data-baseweb="tag"], div[data-baseweb="tag"],
+    .stMultiSelect [data-baseweb="tag"] {
+        background-color: rgba(167,139,250,0.18) !important;
+        color: #c4b5fd !important;
+    }
+    /* multiselect 输入区 */
+    [data-baseweb="select"] input, .stMultiSelect input {
+        background-color: transparent !important;
+        color: #cbd5e1 !important;
+    }
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
@@ -51,6 +82,38 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     .stApp { background: #0d0d14; }
+
+    /* ==== 星光背景（固定 div，持久可见） ==== */
+    .starfield {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 0;
+    }
+    .starfield-layer {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        animation: starTwinkle 3s ease-in-out infinite alternate;
+    }
+    .starfield-layer:nth-child(2) {
+        animation-duration: 2.5s; animation-direction: alternate-reverse;
+    }
+    @keyframes starTwinkle {
+        0% { opacity: 0.4; }
+        50% { opacity: 0.85; }
+        100% { opacity: 1; }
+    }
+
+    /* ==== 入场动画 ==== */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes scaleIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
 
     /* 顶部空白区域消除 */
     .block-container { padding-top: 1rem !important; max-width: 100% !important; }
@@ -101,9 +164,13 @@ st.markdown("""
             rgba(167,139,250,0.22) 0%, rgba(139,92,246,0.06) 40%, rgba(0,0,0,0) 65%);
         pointer-events: none; z-index: 0;
     }
-    .hero-content { position: relative; z-index: 1; text-align: center; max-width: 600px; }
+    .hero-content {
+        position: relative; z-index: 1; text-align: center; max-width: 600px;
+        animation: fadeInUp 0.8s ease-out;
+    }
     .hero-title {
         font-size: 38px; font-weight: 700; color: #f1f5f9; letter-spacing: -1px; margin-bottom: 10px;
+        animation: fadeInUp 0.6s ease-out 0.1s both;
     }
     .hero-title span {
         background: linear-gradient(135deg, #a78bfa, #6ee7b7);
@@ -111,6 +178,7 @@ st.markdown("""
     }
     .hero-desc {
         font-size: 15px; color: #94a3b8; line-height: 1.6; margin-bottom: 24px;
+        animation: fadeInUp 0.6s ease-out 0.25s both;
     }
 
     /* ==== 搜索框（暗色融合） ==== */
@@ -128,10 +196,19 @@ st.markdown("""
     .search-box input::placeholder { color: #475569; }
     .search-box .icon { color: #475569; font-size: 16px; }
 
+    .hero-glow-1, .hero-glow-2 {
+        animation: glowPulse 4s ease-in-out infinite alternate;
+    }
+    @keyframes glowPulse {
+        0% { transform: translateX(-50%) scale(1); opacity: 0.8; }
+        100% { transform: translateX(-50%) scale(1.08); opacity: 1; }
+    }
+
     /* ==== 文章区域 ==== */
     .section-title {
         text-align: center; padding: 32px 0 20px;
         font-size: 22px; font-weight: 600; color: #e2e8f0;
+        animation: fadeInUp 0.5s ease-out 0.3s both;
     }
     .cards-grid {
         display: grid;
@@ -144,8 +221,14 @@ st.markdown("""
     .article-card {
         background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
         border-radius: 14px; overflow: hidden; cursor: pointer;
-        transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), border-color 0.3s, box-shadow 0.3s;
+        animation: fadeInUp 0.6s ease-out both;
     }
+    .article-card:nth-child(1) { animation-delay: 0.15s; }
+    .article-card:nth-child(2) { animation-delay: 0.25s; }
+    .article-card:nth-child(3) { animation-delay: 0.35s; }
+    .article-card:nth-child(4) { animation-delay: 0.45s; }
+    .article-card:nth-child(5) { animation-delay: 0.55s; }
     .article-card:hover {
         transform: translateY(-4px); border-color: rgba(167,139,250,0.25);
         box-shadow: 0 8px 30px rgba(139,92,246,0.10);
@@ -170,9 +253,16 @@ st.markdown("""
     .page-hero {
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         padding: 50px 20px 30px; position: relative; overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
     }
-    .page-title { font-size: 30px; font-weight: 700; color: #f1f5f9; text-align: center; position: relative; z-index: 1; }
-    .page-desc { font-size: 14px; color: #94a3b8; text-align: center; margin-top: 8px; max-width: 500px; }
+    .page-title {
+        font-size: 30px; font-weight: 700; color: #f1f5f9; text-align: center; position: relative; z-index: 1;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    .page-desc {
+        font-size: 14px; color: #94a3b8; text-align: center; margin-top: 8px; max-width: 500px;
+        animation: fadeInUp 0.5s ease-out 0.1s both;
+    }
 
     /* ==== 内容区容器 ==== */
     .content-wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
@@ -217,15 +307,36 @@ st.markdown("""
     .stSelectbox > div > div {
         border: 1px solid rgba(255,255,255,0.10) !important; border-radius: 10px !important;
     }
-    .stDataFrame {
-        background: rgba(255,255,255,0.02) !important; border-radius: 12px !important;
-        border: 1px solid rgba(255,255,255,0.06) !important;
+
+    /* ==== 数据表格 强制暗底 ==== */
+    .stDataFrame, .stDataFrame *, [data-testid="stTable"], [data-testid="stTable"] *,
+    div[data-testid="stDataFrame"], div[data-testid="stDataFrame"] *,
+    div[data-testid="stDataFrame"] div, div[data-testid="stDataFrame"] canvas,
+    .dvn-scroller, .dvn-scroller *, .dvn-scroller div,
+    [data-baseweb="table"], [data-baseweb="table"] *, [data-baseweb="table"] div,
+    table, tbody, thead, tfoot, tr, th, td, colgroup, col {
+        background-color: rgba(255,255,255,0.02) !important;
     }
-    .stDataFrame th { background: rgba(255,255,255,0.04) !important; color: #94a3b8 !important; font-size: 12px !important; }
-    .stDataFrame td { color: #cbd5e1 !important; font-size: 13px !important; }
-    hr { border-color: rgba(255,255,255,0.06); }
+    .stDataFrame {
+        border-radius: 12px !important; border: 1px solid rgba(255,255,255,0.08) !important;
+        overflow: hidden !important;
+    }
+    .stDataFrame th, [data-testid="stTable"] th {
+        color: #94a3b8 !important; font-size: 12px !important; font-weight: 500 !important;
+    }
+    .stDataFrame td, [data-testid="stTable"] td {
+        color: #cbd5e1 !important; font-size: 13px !important;
+    }
+    hr { border-color: rgba(255,255,255,0.06); margin: 32px 0; }
     .stAlert { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
     .stSpinner > div { border-color: #a78bfa !important; }
+
+    /* ==== 节间距统一 ==== */
+    .block-container { max-width: 1300px !important; }
+    .stMainBlockContainer { max-width: 1300px !important; }
+    .section-title { margin: 36px 0 12px; }
+    .hero-section { padding: 40px 20px 24px; }
+    .page-hero { padding: 40px 20px 20px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -385,6 +496,46 @@ def ai_call(system_prompt, user_text, use_model=None):
     )
     return resp.choices[0].message.content
 
+# ==================== 星空背景（固定 div，页面切换不会消失） ====================
+st.markdown("""
+<div class="starfield">
+    <div class="starfield-layer" style="background:
+        radial-gradient(3px 3px at 8% 12%, rgba(167,139,250,0.9), transparent),
+        radial-gradient(2.5px 2.5px at 32% 8%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(4px 4px at 55% 18%, rgba(110,231,183,0.7), transparent),
+        radial-gradient(2px 2px at 78% 5%, rgba(167,139,250,0.85), transparent),
+        radial-gradient(3.5px 3.5px at 92% 22%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(2.5px 2.5px at 15% 38%, rgba(129,140,248,0.8), transparent),
+        radial-gradient(4px 4px at 42% 32%, rgba(110,231,183,0.6), transparent),
+        radial-gradient(3px 3px at 65% 28%, rgba(255,255,255,0.75), transparent),
+        radial-gradient(2px 2px at 22% 55%, rgba(167,139,250,0.7), transparent),
+        radial-gradient(2.5px 2.5px at 48% 62%, rgba(255,255,255,0.65), transparent),
+        radial-gradient(3px 3px at 72% 50%, rgba(129,140,248,0.7), transparent),
+        radial-gradient(2px 2px at 88% 45%, rgba(110,231,183,0.65), transparent),
+        radial-gradient(2.5px 2.5px at 5% 72%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(3px 3px at 35% 78%, rgba(167,139,250,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 18% 25%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1.5px 1.5px at 62% 15%, rgba(255,255,255,0.75), transparent),
+        radial-gradient(1.5px 1.5px at 85% 35%, rgba(129,140,248,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 45% 20%, rgba(255,255,255,0.7), transparent);
+    "></div>
+    <div class="starfield-layer" style="background:
+        radial-gradient(3px 3px at 28% 42%, rgba(167,139,250,0.6), transparent),
+        radial-gradient(2.5px 2.5px at 52% 28%, rgba(255,255,255,0.55), transparent),
+        radial-gradient(4px 4px at 75% 62%, rgba(110,231,183,0.5), transparent),
+        radial-gradient(2px 2px at 88% 18%, rgba(129,140,248,0.6), transparent),
+        radial-gradient(3.5px 3.5px at 8% 52%, rgba(255,255,255,0.55), transparent),
+        radial-gradient(2.5px 2.5px at 42% 72%, rgba(167,139,250,0.5), transparent),
+        radial-gradient(3px 3px at 62% 38%, rgba(255,255,255,0.55), transparent),
+        radial-gradient(1.5px 1.5px at 18% 82%, rgba(110,231,183,0.6), transparent),
+        radial-gradient(1.5px 1.5px at 55% 55%, rgba(167,139,250,0.55), transparent),
+        radial-gradient(1.5px 1.5px at 82% 82%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(2px 2px at 25% 68%, rgba(129,140,248,0.55), transparent),
+        radial-gradient(2px 2px at 68% 85%, rgba(110,231,183,0.5), transparent);
+    "></div>
+</div>
+""", unsafe_allow_html=True)
+
 # ==================== 页面导航 ====================
 PAGES = ["首页", "工具总览", "模型对比", "排行榜", "免费试用"]
 
@@ -395,11 +546,11 @@ def set_page(p):
     st.session_state.page = p
 
 # ==================== 导航栏 ====================
-# Logo（艺术字，放大）
+# Logo（艺术字，2x 放大）
 st.markdown("""
-<div style="text-align:center;padding:20px 0 18px;">
+<div style="text-align:center;padding:30px 0 28px;">
     <span style="
-        font-size:40px; font-weight:800; letter-spacing:-1px;
+        font-size:80px; font-weight:800; letter-spacing:-2px;
         background: linear-gradient(135deg, #a78bfa 0%, #818cf8 40%, #6ee7b7 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     ">Nier AI</span>
@@ -407,7 +558,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 五个页面按钮 —— 居中单行
-st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
+st.markdown('<div style="height:20px;"></div>', unsafe_allow_html=True)
 c0, c1, c2, c3, c4, c5, c6 = st.columns([1.5, 1, 1, 1, 1, 1, 1.5])
 for idx, (col, p) in enumerate(zip([c1, c2, c3, c4, c5], PAGES)):
     with col:
@@ -436,10 +587,17 @@ if st.session_state.page == "首页":
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 搜索框 ---
+    # --- 搜索框 + 推荐词 ---
     _, sc, _ = st.columns([2.5, 3, 2.5])
     with sc:
-        search_query = st.text_input("搜索", placeholder="🔍  搜索模型、评测、关键词...", label_visibility="collapsed", key="home_search")
+        search_query = st.text_input(
+            "搜索",
+            placeholder="🔍  搜索模型、评测、关键词...",
+            label_visibility="collapsed",
+            key="home_search",
+        )
+
+
 
     # --- 精选文章 ---
     st.markdown('<div class="section-title">🔥 精选评测文章</div>', unsafe_allow_html=True)
@@ -582,7 +740,25 @@ elif st.session_state.page == "排行榜":
     elif sb == "输入(¥/M)": data = sorted(data, key=lambda d: d["输入(¥/M)"])
     else: data = sorted(data, key=lambda d: d["模型"])
 
-    st.dataframe(data, use_container_width=True, hide_index=True, height=400)
+    # 手写 HTML 表格（彻底避开 Streamlit 白底）
+    if data:
+        headers = list(data[0].keys())
+        html = '<div style="border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;">'
+        html += '<table style="width:100%;border-collapse:collapse;">'
+        html += '<thead><tr>'
+        for h in headers:
+            html += f'<th style="background:#14141f;color:#94a3b8;font-size:12px;font-weight:500;padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.08);">{h}</th>'
+        html += '</tr></thead><tbody>'
+        for row in data:
+            html += '<tr>'
+            for h in headers:
+                html += f'<td style="background:rgba(255,255,255,0.02);color:#cbd5e1;font-size:13px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);">{row[h]}</td>'
+            html += '</tr>'
+        html += '</tbody></table></div>'
+        st.markdown(html, unsafe_allow_html=True)
+    else:
+        st.markdown('<div style="color:#94a3b8;text-align:center;padding:40px;">没有匹配的模型数据</div>', unsafe_allow_html=True)
+
     st.caption("💡 价格以官方为准，此处仅供参考。数据更新于 2026.05。")
     st.markdown('</div>', unsafe_allow_html=True)
 
